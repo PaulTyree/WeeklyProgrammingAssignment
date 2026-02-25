@@ -1,0 +1,29 @@
+name: C++ DocTest
+
+on:
+  pull_request:
+  push:
+
+jobs:
+  test:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up MSVC
+        uses: ilammy/msvc-dev-cmd@v1
+
+      - name: Build tests
+        shell: cmd
+        run: |
+          REM Compile WeeklyProgrammingAssignment.cpp in TEST MODE (_DEBUG defined)
+          REM /EHsc = standard C++ exception handling
+          REM /MDd links against the Debug C Runtime
+          
+          cl /nologo /EHsc /std:c++17 /D_DEBUG /MDd WeeklyProgrammingAssignment.cpp /Fe:tests.exe
+      - name: Run tests
+        shell: cmd
+        run: |
+          tests.exe
