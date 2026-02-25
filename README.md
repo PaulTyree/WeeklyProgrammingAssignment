@@ -7,11 +7,16 @@ This program takes in information about a user's birding trip(s) and neatly orga
 This week is focused on operater overloading as well as templates.
 
 I have included several overloaded operators such as:
-  operator==\n
-  operator<<\n
-  operator[]\n
-  operator=+\n
-  operator=-\n
+
+operator==
+  
+operator<<
+  
+operator[]
+  
+operator=+
+  
+operator=-
 
 The use of this was added
 
