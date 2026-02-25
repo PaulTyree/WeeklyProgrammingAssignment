@@ -7,6 +7,19 @@
 #include "doctest.h"
 #endif
 
+// ********** MEMORY LEAK STATEMENTS **********
+#define _CRTDBG_MAP_ALLOC
+#include <stdlib.h>
+#include <crtdbg.h>
+
+#ifdef _DEBUG
+#define DBG_NEW new ( _NORMAL_BLOCK , __FILE__ , __LINE__ )
+// Replace _NORMAL_BLOCK with _CLIENT_BLOCK if you want the
+// allocations to be of _CLIENT_BLOCK type
+#else
+#define DBG_NEW new
+#endif
+
 // ********** INCLUDE STATEMENTS **********
 #include <iostream>
 #include <string>
@@ -84,9 +97,8 @@ public:
 			<< ", Distance(mi): " << _distance;
 	}
 
-	// Operator overload
 	friend ostream& operator<<(ostream& os, const Distancetime& obj) {
-		obj.printOneLine(os);  // polymorphism happens here
+		obj.printOneLine(os);
 		return os;
 	}
 
@@ -298,7 +310,7 @@ public:
 
 template <typename T>
 void printSummary(const T& trip, std::ostream& os = std::cout) {
-	os << trip;
+	os << trip << endl;
 }
 
 //********** DOCTEST UNIT TESTS **********
@@ -480,7 +492,7 @@ TEST_CASE("Function Template Test") {
 	printSummary(b, oss);
 
 	CHECK(oss.str() ==
-		"[Type: Car, Location: Lake St. Clair, Time(min): 60, Distance(mi): 2, Birds: 10, Species: 3, Birds/hr: 10]");
+		"[Type: Car, Location: Lake St. Clair, Time(min): 60, Distance(mi): 2, Birds: 10, Species: 3, Birds/hr: 10]\n");
 }
 
 #else
@@ -593,13 +605,15 @@ int main() {
 			cin >> wantedTrip;
 			cin.ignore();
 
-			manager -= wantedTrip;
+			manager -= (wantedTrip - 1);
 		}
 
 	} while (removeTrips == 'y' || removeTrips == 'Y');
 
 	cout << "\nUpdated Birding Trips:" << endl;
 	manager.printTrips();
+
+	_CrtDumpMemoryLeaks();
 
 	return 0;
 }
