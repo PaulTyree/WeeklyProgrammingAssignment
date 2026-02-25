@@ -162,7 +162,7 @@ public:
 		return _birdspecies;
 	}
 
-	bool operator== (const Birdsseen& other) {
+	bool operator== (const Birdsseen& other) const {
 		return (_birdsseen == other._birdsseen && _birdspecies == other._birdspecies);
 	}
 
