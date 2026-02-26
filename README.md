@@ -4,7 +4,7 @@
 
 This program takes in information about a user's birding trip(s) and neatly organizes the data while calculating the average amount of birds seen per hour.
 
-This week is focused on operater overloading as well as templates.
+Week 6 is focused on operater overloading as well as templates.
 
 I have included several overloaded operators such as:
 
@@ -21,3 +21,11 @@ operator=-
 The use of this was added
 
 Lastly, two templates were added, a function template and a class template.
+
+Week 7 changes are focused on exceptions and exception classes.
+
+Exception classes are formatted for my dynamic array and my class managers in order to make sure when removing trips only actual array options are affected
+
+Try, Throw, and Catch statements are used throughout my code now in order to guarantee that the items are used well and meaningfully.
+
+This demonstrates my understanding of the use of try, throw, catch, and exception statements and usages.
