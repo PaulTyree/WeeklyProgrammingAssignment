@@ -270,8 +270,7 @@ public:
 
 	void removeTrip(int index) {
 		if (index < 0 || index >= size) {
-			cout << "Removed Trip" << endl;
-			return;
+			throw std::out_of_range("Invalid index for removal");
 		}
 		delete items[index];
 
@@ -301,8 +300,7 @@ public:
 
 	T* operator[](int index) const {
 		if (index < 0 || index >= size) {
-			cout << "Error: Index out of bounds." << endl;
-			return nullptr;
+			throw std::out_of_range("Index out of bounds");
 		}
 		return items[index];
 	}
@@ -312,6 +310,21 @@ template <typename T>
 void printSummary(const T& trip, std::ostream& os = std::cout) {
 	os << trip << endl;
 }
+
+class Enterzero {
+private:
+	string message;
+public:
+	Enterzero() {
+		message = "Please input a number larger than 0:";
+	}
+	Enterzero(string str) {
+		message = str;
+	}
+	string what() {
+		return message;
+	}
+};
 
 //********** DOCTEST UNIT TESTS **********
 #ifdef _DEBUG
@@ -391,7 +404,7 @@ TEST_CASE("Virtual Function Test") {
 	delete ptr2;
 }
 
-TEST_CASE("Overload Addition/Deletion Tests") {
+TEST_CASE("Overload Addition/Deletion & Invalid Index Tests") {
 	Manager<Distancetime> manager(2);
 
 	Birdsseen* b1 = new Birdsseen();
@@ -412,6 +425,9 @@ TEST_CASE("Overload Addition/Deletion Tests") {
 
 	manager -= (1);
 	CHECK(manager.getSize() == 2);
+
+	CHECK_THROWS_AS(manager -= 5, std::out_of_range);
+	CHECK_THROWS_AS(manager -= -1, std::out_of_range);
 }
 
 TEST_CASE("Overload operator== Test") {
@@ -464,7 +480,7 @@ TEST_CASE("Overload operator<< Test Nobirds") {
 		"[Type: Trail, Location: Kensington, Time(min): 120, Distance(mi): 0.5, Birds: 0, Fun: Yes]");
 }
 
-TEST_CASE("Overload operator[] & Class Template Test") {
+TEST_CASE("Overload operator[] & Class Template Test & Invalid Index Test") {
 	Manager<Distancetime> manager;
 
 	Birdsseen* b = new Birdsseen();
@@ -474,8 +490,11 @@ TEST_CASE("Overload operator[] & Class Template Test") {
 
 	manager.addTrip(b);
 
+	
 	CHECK(manager[0] != nullptr);
-	CHECK(manager[1] == nullptr);
+
+	CHECK_THROWS_AS(manager[1], std::out_of_range);
+	CHECK_THROWS_AS(manager[-1], std::out_of_range);
 }
 
 TEST_CASE("Function Template Test") {
@@ -525,8 +544,12 @@ int main() {
 		cin >> time;
 
 		do {
-			if (time <= 0) {
-				cout << "Please input a number larger than 0:" << endl;
+			try {
+				if (time <= 0)
+				throw Enterzero();
+			}
+			catch (Enterzero enterzero) {
+				cout << enterzero.what() << endl;
 				cin >> time;
 			}
 		} while (time <= 0);
@@ -535,8 +558,12 @@ int main() {
 		cin >> distance;
 
 		do {
-			if (distance <= 0) {
-				cout << "Please input a number larger than 0:" << endl;
+			try {
+				if (time <= 0)
+				throw Enterzero();
+			}
+			catch (Enterzero enterzero) {
+				cout << enterzero.what() << endl;
 				cin >> distance;
 			}
 		} while (distance <= 0);
@@ -604,8 +631,13 @@ int main() {
 			cout << "Which trip would you like to remove?" << endl;
 			cin >> wantedTrip;
 			cin.ignore();
-
-			manager -= (wantedTrip - 1);
+			
+			try {
+				manager -= (wantedTrip - 1);
+			}
+			catch (std::out_of_range& exception) {
+				cout << exception.what() << endl;
+			}
 		}
 
 	} while (removeTrips == 'y' || removeTrips == 'Y');
