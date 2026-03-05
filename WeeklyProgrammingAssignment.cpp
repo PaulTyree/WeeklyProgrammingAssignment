@@ -304,6 +304,14 @@ public:
 		}
 		return items[index];
 	}
+
+	int countTripsRecursive(int index = 0) const {
+		if (index >= size) {
+			return 0;
+		}
+		return 1 + countTripsRecursive(index + 1);
+	}
+
 };
 
 template <typename T>
@@ -514,6 +522,25 @@ TEST_CASE("Function Template Test") {
 		"[Type: Car, Location: Lake St. Clair, Time(min): 60, Distance(mi): 2, Birds: 10, Species: 3, Birds/hr: 10]\n");
 }
 
+TEST_CASE("Recursive Trip Count Test") {
+	Manager<Distancetime> manager;
+
+	CHECK(manager.countTripsRecursive() == 0);
+
+	Birdsseen* b1 = new Birdsseen();
+	b1->setTime(60);
+	b1->setBirdsseen(120);
+
+	Nobirds* n1 = new Nobirds();
+	n1->setTime(30);
+	n1->setFun("Yes");
+
+	manager += b1;
+	manager += n1;
+
+	CHECK(manager.countTripsRecursive() == 2);
+}
+
 #else
 
 //********** MAIN FUNCTION **********
@@ -556,17 +583,6 @@ int main() {
 
 		cout << "How many miles did you travel while birding?" << endl;
 		cin >> distance;
-
-		do {
-			try {
-				if (time <= 0)
-				throw Enterzero();
-			}
-			catch (Enterzero enterzero) {
-				cout << enterzero.what() << endl;
-				cin >> distance;
-			}
-		} while (distance <= 0);
 
 		cout << "What type of birding did you do? (0 = Trail, 1 = Car, 2 = Park): " << endl;
 		cin >> typechoice;
@@ -621,6 +637,7 @@ int main() {
 
 	cout << "\nAll Birding Trips:" << endl;
 	manager.printTrips();
+	cout << "Total trips taken: " << manager.countTripsRecursive() << endl;
 
 	do {
 		cout << "Would you like to remove a birding trip? (Y/N)" << endl;
@@ -644,6 +661,7 @@ int main() {
 
 	cout << "\nUpdated Birding Trips:" << endl;
 	manager.printTrips();
+	cout << "Total trips taken: " << manager.countTripsRecursive() << endl;
 
 	_CrtDumpMemoryLeaks();
 
