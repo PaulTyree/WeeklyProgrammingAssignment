@@ -29,3 +29,11 @@ Exception classes are formatted for my dynamic array and my class managers in or
 Try, Throw, and Catch statements are used throughout my code now in order to guarantee that the items are used well and meaningfully.
 
 This demonstrates my understanding of the use of try, throw, catch, and exception statements and usages.
+
+Week 8 is made to create a new recursive function within our program
+
+This is done in the Manager template class, using the function countTripsRecursive
+
+This function is used to print the number of trips a user has taken in an instance of the program
+
+It is used after the user has added all of their trips as well as deleted all of their trips

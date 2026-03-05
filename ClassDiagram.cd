@@ -1,45 +1,52 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <ClassDiagram MajorVersion="1" MinorVersion="1">
   <Class Name="Distancetime">
-    <Position X="3.75" Y="1.75" Width="1.5" />
+    <Position X="3.75" Y="1.25" Width="1.5" />
     <TypeIdentifier>
       <HashCode>AAIAAUAAAAAgQAAAAAAAAAAAATABAAAAAGAABBEUIAA=</HashCode>
-      <FileName>Week6ProgrammingAssignment.cpp</FileName>
+      <FileName>WeeklyProgrammingAssignment.cpp</FileName>
     </TypeIdentifier>
   </Class>
   <Class Name="Hourlybirds">
-    <Position X="8.5" Y="1" Width="1.5" />
+    <Position X="8.5" Y="0.5" Width="1.5" />
     <TypeIdentifier>
       <HashCode>AAAAAAAAAAAAAAAAAAAAgBAAABAAAAAIAAAAAAAAAAA=</HashCode>
-      <FileName>Week6ProgrammingAssignment.cpp</FileName>
+      <FileName>WeeklyProgrammingAssignment.cpp</FileName>
     </TypeIdentifier>
   </Class>
   <Class Name="Birdsseen">
-    <Position X="6.5" Y="1" Width="1.5" />
+    <Position X="6.5" Y="0.5" Width="1.5" />
     <TypeIdentifier>
       <HashCode>AAABAEAAQAAEAAAIAQAAEQAACAAAAAAAAAAAABAUAAA=</HashCode>
-      <FileName>Week6ProgrammingAssignment.cpp</FileName>
+      <FileName>WeeklyProgrammingAssignment.cpp</FileName>
     </TypeIdentifier>
   </Class>
   <Class Name="Nobirds">
-    <Position X="6.5" Y="5" Width="1.5" />
+    <Position X="6.5" Y="4.5" Width="1.5" />
     <TypeIdentifier>
       <HashCode>AAAAAEAAAAIAAAAAAAAAAAAAAAAAIAAgAAAAABAEAAA=</HashCode>
-      <FileName>Week6ProgrammingAssignment.cpp</FileName>
+      <FileName>WeeklyProgrammingAssignment.cpp</FileName>
     </TypeIdentifier>
   </Class>
   <Class Name="Manager&lt;T&gt;">
-    <Position X="10.5" Y="1" Width="1.5" />
+    <Position X="10.5" Y="0.5" Width="1.5" />
     <TypeIdentifier>
-      <HashCode>AAABAAAAAIAAAAAAAIoQAQAAAAECBAAAAAAAAAAAgAA=</HashCode>
-      <FileName>Week6ProgrammingAssignment.cpp</FileName>
+      <HashCode>AAABAAAAAICAAAAAAIoQAQAAAAECBAAAAAAAAAAAgAA=</HashCode>
+      <FileName>WeeklyProgrammingAssignment.cpp</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="Enterzero">
+    <Position X="8.5" Y="2.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAACAAAAAAAAAAAAAgAAAAAAAAAAAAAAAACA=</HashCode>
+      <FileName>WeeklyProgrammingAssignment.cpp</FileName>
     </TypeIdentifier>
   </Class>
   <Enum Name="_Type">
-    <Position X="1.75" Y="1.75" Width="1.5" />
+    <Position X="1.75" Y="1.25" Width="1.5" />
     <TypeIdentifier>
       <HashCode>AAAAAEBAAAAAAAAAAAAAgAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
-      <FileName>Week6ProgrammingAssignment.cpp</FileName>
+      <FileName>WeeklyProgrammingAssignment.cpp</FileName>
     </TypeIdentifier>
   </Enum>
   <Font Name="Segoe UI" Size="9" />
