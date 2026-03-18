@@ -27,6 +27,7 @@
 #include <fstream>
 #include <windows.h>
 #include <sstream>
+#include <vector>
 
 using namespace std;
 HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
@@ -117,6 +118,8 @@ public:
 	virtual ~Distancetime() {
 
 	};
+
+	virtual double getBirdCount() const = 0;
 };
 
 //********** Composition Class 1 To Determine Bird Average **********
@@ -174,6 +177,10 @@ public:
 		return _birdspecies;
 	}
 
+	double getBirdCount() const override {
+		return _birdsseen;
+	}
+
 	bool operator== (const Birdsseen& other) const {
 		return (_birdsseen == other._birdsseen && _birdspecies == other._birdspecies);
 	}
@@ -215,6 +222,10 @@ public:
 		return _fun;
 	}
 
+	double getBirdCount() const override {
+		return 0.0;
+	}
+
 	void printOneLine(ostream& os) const override {
 		Distancetime::printOneLine(os);
 		os << ", Birds: 0"
@@ -232,35 +243,22 @@ public:
 template <typename T>
 class Manager {
 private:
-	T** items;
-	int size;
-	int capacity;
+	vector<T*> items;
 protected:
 
 public:
 	Manager(int initialCapacity = 10) {
-		size = 0;
-		capacity = initialCapacity;
-		items = new T * [capacity];
+
 	}
 
 	~Manager() {
-		for (int i = 0; i < size; i++) {
-			delete items[i];
+		for (auto item : items) {
+			delete item;
 		}
-		delete[] items;
 	}
 
 	void addTrip(T* trip) {
-		if (size >= capacity) {
-			capacity *= 2;
-			T** newItems = new T * [capacity];
-			for (int i = 0; i < size; i++)
-				newItems[i] = items[i];
-			delete[] items;
-			items = newItems;
-		}
-		items[size++] = trip;
+		items.push_back(trip);
 	}
 
 	Manager& operator+=(T* trip) {
@@ -269,15 +267,11 @@ public:
 	}
 
 	void removeTrip(int index) {
-		if (index < 0 || index >= size) {
+		if (index < 0 || index >= items.size()) {
 			throw std::out_of_range("Invalid index for removal");
 		}
 		delete items[index];
-
-		for (int i = index; i < size - 1; i++) {
-			items[i] = items[i + 1];
-		}
-		size--;
+		items.erase(items.begin() + index);
 	}
 
 	Manager& operator-=(int index) {
@@ -286,32 +280,73 @@ public:
 	}
 
 	void printTrips() const {
-		for (int i = 0; i < size; i++) {
+		for (int item = 0; item < items.size(); item++) {
 			SetConsoleTextAttribute(hConsole, 13);
-			cout << "Birding Trip #" << (i + 1) << endl;
+			cout << "Birding Trip #" << (item + 1) << endl;
 			SetConsoleTextAttribute(hConsole, 7);
-			items[i]->Print();
+			items[item]->Print();
 		}
 	}
 
 	int getSize() const {
-		return size;
+		return items.size();
 	}
 
 	T* operator[](int index) const {
-		if (index < 0 || index >= size) {
+		if (index < 0 || index >= items.size()) {
 			throw std::out_of_range("Index out of bounds");
 		}
 		return items[index];
 	}
 
 	int countTripsRecursive(int index = 0) const {
-		if (index >= size) {
+		if (index >= items.size()) {
 			return 0;
 		}
 		return 1 + countTripsRecursive(index + 1);
 	}
 
+	int Sequentialsearch(const string& targetLocation) const {
+		for (int item = 0; item < items.size(); item++) {
+			if (items[item]->getLocation() == targetLocation) {
+				return item;
+			}
+		}
+		return -1;
+	}
+
+	void Bubblesort() {
+		for (int item = 0; item < items.size() - 1; item++) {
+			for (int item2 = 0; item2 < items.size() - item - 1; item2++) {
+				if (items[item2]->getBirdCount() > items[item2 + 1]->getBirdCount()) {
+					T* temp = items[item2];
+					items[item2] = items[item2 + 1];
+					items[item2 + 1] = temp;
+				}
+			}
+		}
+	}
+
+	int Binarysearch(double targetBird) const {
+		int first = 0;
+		int last = items.size() - 1;
+
+		while (first <= last) {
+			int mid = (first + last) / 2;
+			double midBird = items[mid]->getBirdCount();
+
+			if (midBird == targetBird) {
+				return mid;
+			}
+			else if (midBird > targetBird) {
+				last = mid - 1;
+			}
+			else {
+				first = mid + 1;
+			}
+		}
+		return -1;
+	}
 };
 
 template <typename T>
@@ -522,16 +557,18 @@ TEST_CASE("Function Template Test") {
 		"[Type: Car, Location: Lake St. Clair, Time(min): 60, Distance(mi): 2, Birds: 10, Species: 3, Birds/hr: 10]\n");
 }
 
-TEST_CASE("Recursive Trip Count Test") {
+TEST_CASE("Recursive Trip Count + Search Test") {
 	Manager<Distancetime> manager;
 
 	CHECK(manager.countTripsRecursive() == 0);
 
 	Birdsseen* b1 = new Birdsseen();
+	b1->setLocation("Kensington");
 	b1->setTime(60);
 	b1->setBirdsseen(120);
 
 	Nobirds* n1 = new Nobirds();
+	n1->setLocation("Lake");
 	n1->setTime(30);
 	n1->setFun("Yes");
 
@@ -539,6 +576,39 @@ TEST_CASE("Recursive Trip Count Test") {
 	manager += n1;
 
 	CHECK(manager.countTripsRecursive() == 2);
+
+	CHECK(manager.Sequentialsearch("Kensington") == 0);
+	CHECK(manager.Sequentialsearch("Lake") == 1);
+
+	CHECK(manager.Sequentialsearch("Stony Creek") == -1);
+}
+
+TEST_CASE("Bubble Sort + Binary Search Test") {
+	Manager<Distancetime> manager;
+
+	Birdsseen* b1 = new Birdsseen();
+	b1->setLocation("Kensington");
+	b1->setBirdsseen(20);
+
+	Birdsseen* b2 = new Birdsseen();
+	b2->setLocation("Lake");
+	b2->setBirdsseen(5);
+
+	Nobirds* n1 = new Nobirds();
+	n1->setLocation("Stony");
+
+	manager += b1;
+	manager += b2;
+	manager += n1;
+
+	manager.Bubblesort();
+
+	CHECK(manager[0]->getLocation() == "Stony");
+	CHECK(manager[1]->getLocation() == "Lake");
+	CHECK(manager[2]->getLocation() == "Kensington");
+
+	CHECK(manager.Binarysearch(20) == 2);
+	CHECK(manager.Binarysearch(50) == -1);
 }
 
 #else
