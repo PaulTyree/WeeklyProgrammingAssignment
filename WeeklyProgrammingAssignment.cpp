@@ -557,7 +557,7 @@ TEST_CASE("Function Template Test") {
 		"[Type: Car, Location: Lake St. Clair, Time(min): 60, Distance(mi): 2, Birds: 10, Species: 3, Birds/hr: 10]\n");
 }
 
-TEST_CASE("Recursive Trip Count + Search Test") {
+TEST_CASE("Recursive Trip Count + Sequential Search Test") {
 	Manager<Distancetime> manager;
 
 	CHECK(manager.countTripsRecursive() == 0);
