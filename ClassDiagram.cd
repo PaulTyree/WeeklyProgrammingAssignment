@@ -3,7 +3,7 @@
   <Class Name="Distancetime">
     <Position X="3.75" Y="1.25" Width="1.5" />
     <TypeIdentifier>
-      <HashCode>AAIAAUAAAAAgQAAAAAAAAAAAATABAAAAAGAABBEUIAA=</HashCode>
+      <HashCode>AAIAAUAAAAAgQAAAAAAAACAAATABAAAAAGAABBEUIAA=</HashCode>
       <FileName>WeeklyProgrammingAssignment.cpp</FileName>
     </TypeIdentifier>
   </Class>
@@ -17,21 +17,21 @@
   <Class Name="Birdsseen">
     <Position X="6.5" Y="0.5" Width="1.5" />
     <TypeIdentifier>
-      <HashCode>AAABAEAAQAAEAAAIAQAAEQAACAAAAAAAAAAAABAUAAA=</HashCode>
+      <HashCode>AAABAEAAQAAEAAAIAQAAESAACAAAAAAAAAAAABAUAAA=</HashCode>
       <FileName>WeeklyProgrammingAssignment.cpp</FileName>
     </TypeIdentifier>
   </Class>
   <Class Name="Nobirds">
     <Position X="6.5" Y="4.5" Width="1.5" />
     <TypeIdentifier>
-      <HashCode>AAAAAEAAAAIAAAAAAAAAAAAAAAAAIAAgAAAAABAEAAA=</HashCode>
+      <HashCode>AAAAAEAAAAIAAAAAAAAAACAAAAAAIAAgAAAAABAEAAA=</HashCode>
       <FileName>WeeklyProgrammingAssignment.cpp</FileName>
     </TypeIdentifier>
   </Class>
   <Class Name="Manager&lt;T&gt;">
     <Position X="10.5" Y="0.5" Width="1.5" />
     <TypeIdentifier>
-      <HashCode>AAABAAAAAICAAAAAAIoQAQAAAAECBAAAAAAAAAAAgAA=</HashCode>
+      <HashCode>AAABAAAAAICCAAAAAAgQAQAAAAECJACAAAAAAAAAgAA=</HashCode>
       <FileName>WeeklyProgrammingAssignment.cpp</FileName>
     </TypeIdentifier>
   </Class>
