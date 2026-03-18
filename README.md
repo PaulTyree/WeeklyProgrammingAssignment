@@ -37,3 +37,13 @@ This is done in the Manager template class, using the function countTripsRecursi
 This function is used to print the number of trips a user has taken in an instance of the program
 
 It is used after the user has added all of their trips as well as deleted all of their trips
+
+Week 9 focuses on changing our items array into a vector as well as sorting the vector in different ways
+
+items.size() is used for a dealing with the dynamic resizing of our vector to add and remove trips
+
+A sequential search is used in order to find a specific location within the trips
+
+A bubble sort is then used to sort trips based on the amount of birds that were seen from least amount seen to most amount seen
+
+Finally, a binary search is used on the vector that was just sorted using the bubble method in order to find the index location of a trip that has "x" amount of birds.
