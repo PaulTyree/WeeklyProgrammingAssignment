@@ -31,7 +31,7 @@
   <Class Name="Manager&lt;T&gt;">
     <Position X="10.5" Y="0.5" Width="1.5" />
     <TypeIdentifier>
-      <HashCode>AAABAAAAAICCAAAAAAgQAQAAAAECJACAAAAAAAAAgAA=</HashCode>
+      <HashCode>AAABAAAAAICCAAAAAAgQAQAAAAECJACAAAAAAAAAgAI=</HashCode>
       <FileName>WeeklyProgrammingAssignment.cpp</FileName>
     </TypeIdentifier>
   </Class>
@@ -39,6 +39,25 @@
     <Position X="8.5" Y="2.75" Width="1.5" />
     <TypeIdentifier>
       <HashCode>AAAAAAAAAACAAAAAAAAAAAAAgAAAAAAAAAAAAAAAACA=</HashCode>
+      <FileName>WeeklyProgrammingAssignment.cpp</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="LinkedList&lt;T&gt;">
+    <Position X="12.25" Y="0.5" Width="1.5" />
+    <NestedTypes>
+      <Struct Name="LinkedList&lt;T&gt;::Node" Collapsed="true">
+        <TypeIdentifier>
+          <NewMemberFileName>WeeklyProgrammingAssignment.cpp</NewMemberFileName>
+        </TypeIdentifier>
+      </Struct>
+      <Class Name="LinkedList&lt;T&gt;::Iterator" Collapsed="true">
+        <TypeIdentifier>
+          <NewMemberFileName>WeeklyProgrammingAssignment.cpp</NewMemberFileName>
+        </TypeIdentifier>
+      </Class>
+    </NestedTypes>
+    <TypeIdentifier>
+      <HashCode>AEAAAAAAgJAAAAAEAIQARQAQAAAAAAAQACAAAAAAAAA=</HashCode>
       <FileName>WeeklyProgrammingAssignment.cpp</FileName>
     </TypeIdentifier>
   </Class>
