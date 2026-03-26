@@ -47,3 +47,7 @@ A sequential search is used in order to find a specific location within the trip
 A bubble sort is then used to sort trips based on the amount of birds that were seen from least amount seen to most amount seen
 
 Finally, a binary search is used on the vector that was just sorted using the bubble method in order to find the index location of a trip that has "x" amount of birds.
+
+Week 10 is all about experimenting with linked lists in order to hone our knowledge on pointers.
+
+Our vector class has changed to be a linked list and we implement data into both front and back. We are also able to search, print, and delete data all within the list as well.
