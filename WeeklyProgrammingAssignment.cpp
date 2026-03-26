@@ -240,88 +240,217 @@ public:
 	}
 };
 
-template <typename T>
-class Manager {
+template <typename T2>
+class LinkedList {
 private:
-	vector<T*> items;
-protected:
+	struct Node {
+		T2* data;
+		Node* next;
+		Node(T2* d) : data(d), next(nullptr) {}
+	};
+
+	Node* head;
+	int size;
 
 public:
-	Manager(int initialCapacity = 10) {
+	LinkedList() : head(nullptr), size(0) {}
 
+	~LinkedList() {
+		clear();
 	}
 
-	~Manager() {
-		for (auto item : items) {
-			delete item;
+	void insertFront(T2* item) {
+		Node* newNode = new Node(item);
+		newNode->next = head;
+		head = newNode;
+		size++;
+	}
+
+	void insertBack(T2* item) {
+		Node* newNode = new Node(item);
+
+		if (!head) {
+			head = newNode;
 		}
-	}
-
-	void addTrip(T* trip) {
-		items.push_back(trip);
-	}
-
-	Manager& operator+=(T* trip) {
-		this->addTrip(trip);
-		return *this;
-	}
-
-	void removeTrip(int index) {
-		if (index < 0 || index >= items.size()) {
-			throw std::out_of_range("Invalid index for removal");
+		else {
+			Node* current = head;
+			while (current->next)
+				current = current->next;
+			current->next = newNode;
 		}
-		delete items[index];
-		items.erase(items.begin() + index);
+		size++;
 	}
 
-	Manager& operator-=(int index) {
-		this->removeTrip(index);
-		return *this;
-	}
+	void remove(int index) {
+		if (index < 0 || index >= size)
+			throw std::out_of_range("Invalid index");
 
-	void printTrips() const {
-		for (int item = 0; item < items.size(); item++) {
-			SetConsoleTextAttribute(hConsole, 13);
-			cout << "Birding Trip #" << (item + 1) << endl;
-			SetConsoleTextAttribute(hConsole, 7);
-			items[item]->Print();
+		Node* temp = head;
+
+		if (index == 0) {
+			head = head->next;
 		}
-	}
-
-	int getSize() const {
-		return items.size();
-	}
-
-	T* operator[](int index) const {
-		if (index < 0 || index >= items.size()) {
-			throw std::out_of_range("Index out of bounds");
-		}
-		return items[index];
-	}
-
-	int countTripsRecursive(int index = 0) const {
-		if (index >= items.size()) {
-			return 0;
-		}
-		return 1 + countTripsRecursive(index + 1);
-	}
-
-	int Sequentialsearch(const string& targetLocation) const {
-		for (int item = 0; item < items.size(); item++) {
-			if (items[item]->getLocation() == targetLocation) {
-				return item;
+		else {
+			Node* prev = nullptr;
+			for (int item = 0; item < index; item++) {
+				prev = temp;
+				temp = temp->next;
 			}
+			prev->next = temp->next;
+		}
+
+		delete temp->data;
+		delete temp;
+		size--;
+	}
+
+	int search(const string& location) const {
+		Node* current = head;
+		int index = 0;
+
+		while (current) {
+			if (current->data->getLocation() == location)
+				return index;
+			current = current->next;
+			index++;
 		}
 		return -1;
 	}
 
+	void set(int index, T2* value) {
+		if (index < 0 || index >= size)
+			throw std::out_of_range("Index out of bounds");
+
+		Node* current = head;
+		for (int item = 0; item < index; item++)
+			current = current->next;
+
+		current->data = value;
+	}
+
+	T2* get(int index) const {
+		if (index < 0 || index >= size)
+			throw std::out_of_range("Index out of bounds");
+
+		Node* current = head;
+		for (int item = 0; item < index; item++)
+			current = current->next;
+
+		return current->data;
+	}
+
+	int getSize() const {
+		return size;
+	}
+
+	void clear() {
+		Node* current = head;
+		while (current) {
+			Node* temp = current;
+			current = current->next;
+			delete temp->data;
+			delete temp;
+		}
+		head = nullptr;
+		size = 0;
+	}
+
+	class Iterator {
+	private:
+		Node* current;
+	public:
+		Iterator(Node* start) : current(start) {}
+
+		bool hasNext() const {
+			return current != nullptr;
+		}
+
+		void next() {
+			if (current) current = current->next;
+		}
+
+		T2* getData() const {
+			if (!current) throw std::runtime_error("Invalid iterator");
+			return current->data;
+		}
+	};
+
+	Iterator begin() const {
+		return Iterator(head);
+	}
+};
+
+template <typename T>
+class Manager {
+private:
+	LinkedList<T> items;
+
+public:
+	Manager(int initialCapacity = 10) {}
+
+	~Manager() {}
+
+	void addTrip(T* trip) {
+		items.insertBack(trip);
+	}
+
+	Manager& operator+=(T* trip) {
+		addTrip(trip);
+		return *this;
+	}
+
+	void removeTrip(int index) {
+		items.remove(index);
+	}
+
+	Manager& operator-=(int index) {
+		removeTrip(index);
+		return *this;
+	}
+
+	void printTrips() const {
+		auto it = items.begin();
+		int i = 1;
+
+		while (it.hasNext()) {
+			SetConsoleTextAttribute(hConsole, 13);
+			cout << "Birding Trip #" << i++ << endl;
+			SetConsoleTextAttribute(hConsole, 7);
+
+			it.getData()->Print();
+			it.next();
+		}
+	}
+
+	int getSize() const {
+		return items.getSize();
+	}
+
+	T* operator[](int index) const {
+		return items.get(index);
+	}
+
+	int countTripsRecursiveHelper(int index) const {
+		if (index >= items.getSize()) return 0;
+		return 1 + countTripsRecursiveHelper(index + 1);
+	}
+
+	int countTripsRecursive() const {
+		return countTripsRecursiveHelper(0);
+	}
+
+	int Sequentialsearch(const string& targetLocation) const {
+		return items.search(targetLocation);
+	}
+
 	void Bubblesort() {
-		for (int item = 0; item < items.size() - 1; item++) {
-			for (int item2 = 0; item2 < items.size() - item - 1; item2++) {
-				if (items[item2]->getBirdCount() > items[item2 + 1]->getBirdCount()) {
-					T* temp = items[item2];
-					items[item2] = items[item2 + 1];
-					items[item2 + 1] = temp;
+		int n = items.getSize();
+		for (int i = 0; i < n - 1; i++) {
+			for (int j = 0; j < n - i - 1; j++) {
+				if (items.get(j)->getBirdCount() > items.get(j + 1)->getBirdCount()) {
+					T* temp = items.get(j);
+					items.set(j, items.get(j + 1));
+					items.set(j + 1, temp);
 				}
 			}
 		}
@@ -329,21 +458,15 @@ public:
 
 	int Binarysearch(double targetBird) const {
 		int first = 0;
-		int last = items.size() - 1;
+		int last = items.getSize() - 1;
 
 		while (first <= last) {
 			int mid = (first + last) / 2;
-			double midBird = items[mid]->getBirdCount();
+			double midBird = items.get(mid)->getBirdCount();
 
-			if (midBird == targetBird) {
-				return mid;
-			}
-			else if (midBird > targetBird) {
-				last = mid - 1;
-			}
-			else {
-				first = mid + 1;
-			}
+			if (midBird == targetBird) return mid;
+			else if (midBird > targetBird) last = mid - 1;
+			else first = mid + 1;
 		}
 		return -1;
 	}
@@ -447,8 +570,11 @@ TEST_CASE("Virtual Function Test") {
 	delete ptr2;
 }
 
-TEST_CASE("Overload Addition/Deletion & Invalid Index Tests") {
-	Manager<Distancetime> manager(2);
+TEST_CASE("Linked List Addition/Deletion & Invalid Index Tests") {
+	Manager<Distancetime> manager;
+
+	CHECK(manager.getSize() == 0);
+	CHECK(manager.countTripsRecursive() == 0);
 
 	Birdsseen* b1 = new Birdsseen();
 	b1->setLocation("Lake A"); b1->setTime(60); b1->setBirdsseen(5);
@@ -557,7 +683,7 @@ TEST_CASE("Function Template Test") {
 		"[Type: Car, Location: Lake St. Clair, Time(min): 60, Distance(mi): 2, Birds: 10, Species: 3, Birds/hr: 10]\n");
 }
 
-TEST_CASE("Recursive Trip Count + Sequential Search Test") {
+TEST_CASE("Linked List Recursive Trip Count & Sequential Search Test") {
 	Manager<Distancetime> manager;
 
 	CHECK(manager.countTripsRecursive() == 0);
@@ -583,7 +709,7 @@ TEST_CASE("Recursive Trip Count + Sequential Search Test") {
 	CHECK(manager.Sequentialsearch("Stony Creek") == -1);
 }
 
-TEST_CASE("Bubble Sort + Binary Search Test") {
+TEST_CASE("Bubble Sort & Binary Search Test") {
 	Manager<Distancetime> manager;
 
 	Birdsseen* b1 = new Birdsseen();
@@ -609,6 +735,27 @@ TEST_CASE("Bubble Sort + Binary Search Test") {
 
 	CHECK(manager.Binarysearch(20) == 2);
 	CHECK(manager.Binarysearch(50) == -1);
+}
+
+TEST_CASE("Iterator Test & Different Insertion Tests") {
+	LinkedList<Distancetime> list;
+
+	Birdsseen* b1 = new Birdsseen();
+	b1->setLocation("Kensington");
+
+	Birdsseen* b2 = new Birdsseen();
+	b2->setLocation("Lake St. Clair");
+
+	list.insertFront(b1);
+	list.insertBack(b2);
+
+	auto it = list.begin();
+
+	CHECK(it.hasNext());
+	CHECK(it.getData()->getLocation() == "Kensington");
+
+	it.next();
+	CHECK(it.getData()->getLocation() == "Lake St. Clair");
 }
 
 #else
