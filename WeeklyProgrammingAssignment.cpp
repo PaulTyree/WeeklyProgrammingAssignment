@@ -14,8 +14,6 @@
 
 #ifdef _DEBUG
 #define DBG_NEW new ( _NORMAL_BLOCK , __FILE__ , __LINE__ )
-// Replace _NORMAL_BLOCK with _CLIENT_BLOCK if you want the
-// allocations to be of _CLIENT_BLOCK type
 #else
 #define DBG_NEW new
 #endif
@@ -38,9 +36,6 @@ enum _Type {
 	CAR,
 	PARK
 };
-
-//********** PRINT TABLE FUNCTION (NOT USED CURRENTLY) **********
-//void printTable(const string& location, int time, double distance, _Type type, double birdsObserved, double hourlyAverage);
 
 //********** Base Class To Determine Time, Distance, Location, and Type of Birding **********
 class Distancetime {
@@ -492,6 +487,143 @@ public:
 	}
 };
 
+// ===== ASSIGNMENT 11 ADDITION =====
+// Stack class implemented using a linked list
+// WHY linked list? Because the existing program already uses a linked list pattern
+// and a linked list based stack has no size limit unlike an array based stack
+// Used to track trip history so the user can undo the last added trip
+template <typename T>
+class TripStack {
+private:
+	// ===== ASSIGNMENT 11 ADDITION =====
+	// Node structure for the stack
+	struct StackNode {
+		T* data;        // pointer to the trip
+		StackNode* next; // pointer to the next node
+		StackNode(T* d) : data(d), next(nullptr) {}
+	};
+	StackNode* top;  // pointer to the top of the stack
+	int size;        // number of items in the stack
+public:
+	// Constructor — initializes empty stack
+	TripStack() : top(nullptr), size(0) {}
+	// Destructor — cleans up all nodes
+	// NOTE: does NOT delete the trip data — Manager owns the trips
+	~TripStack() {
+		while (!isEmpty()) {
+			StackNode* temp = top;
+			top = top->next;
+			delete temp;  // delete node only not the trip data
+		}
+	}
+	// Push — adds a trip pointer to the top of the stack
+	void push(T* trip) {
+		StackNode* newNode = new StackNode(trip);
+		newNode->next = top;
+		top = newNode;
+		size++;
+	}
+	// Pop — removes the top trip pointer from the stack
+	// throws exception if stack is empty
+	void pop() {
+		if (isEmpty())
+			throw std::out_of_range("Stack is empty — cannot pop");
+		StackNode* temp = top;
+		top = top->next;
+		delete temp;  // delete node only not the trip data
+		size--;
+	}
+	// Peek — returns the top trip pointer without removing it
+	// throws exception if stack is empty
+	T* peek() const {
+		if (isEmpty())
+			throw std::out_of_range("Stack is empty — cannot peek");
+		return top->data;
+	}
+	// isEmpty — returns true if stack has no items
+	bool isEmpty() const {
+		return top == nullptr;
+	}
+	// getSize — returns number of items in the stack
+	int getSize() const {
+		return size;
+	}
+};
+
+// ===== ASSIGNMENT 11 ADDITION =====
+// Queue class implemented using a linked list
+// WHY linked list? Because a linked list queue has no size limit
+// and enqueue/dequeue are both O(1) with front and back pointers
+// Used as a pending trip queue — trips waiting to be reviewed
+template <typename T>
+class TripQueue {
+private:
+	// ===== ASSIGNMENT 11 ADDITION =====
+	// Node structure for the queue
+	struct QueueNode {
+		T* data;         // pointer to the trip
+		QueueNode* next; // pointer to the next node
+		QueueNode(T* d) : data(d), next(nullptr) {}
+	};
+	QueueNode* front;  // pointer to front of queue — dequeue from here
+	QueueNode* back;   // pointer to back of queue — enqueue here
+	int size;          // number of items in the queue
+public:
+	// Constructor — initializes empty queue
+	TripQueue() : front(nullptr), back(nullptr), size(0) {}
+	// Destructor — cleans up all nodes
+	// NOTE: does NOT delete the trip data — Manager owns the trips
+	~TripQueue() {
+		while (!isEmpty()) {
+			QueueNode* temp = front;
+			front = front->next;
+			delete temp;  // delete node only not the trip data
+		}
+	}
+	// Enqueue — adds a trip pointer to the back of the queue
+	void enqueue(T* trip) {
+		QueueNode* newNode = new QueueNode(trip);
+		if (back == nullptr) {
+			// queue is empty — new node is both front and back
+			front = newNode;
+			back = newNode;
+		}
+		else {
+			// point current back to new node then update back
+			back->next = newNode;
+			back = newNode;
+		}
+		size++;
+	}
+	// Dequeue — removes the front trip pointer from the queue
+	// throws exception if queue is empty
+	void dequeue() {
+		if (isEmpty())
+			throw std::out_of_range("Queue is empty — cannot dequeue");
+		QueueNode* temp = front;
+		front = front->next;
+		if (front == nullptr)
+			back = nullptr;  // queue is now empty
+		delete temp;  // delete node only not the trip data
+		size--;
+	}
+	// Front — returns the front trip pointer without removing it
+	// throws exception if queue is empty
+	T* getFront() const {
+		if (isEmpty())
+			throw std::out_of_range("Queue is empty — cannot get front");
+		return front->data;
+	}
+	// isEmpty — returns true if queue has no items
+	bool isEmpty() const {
+		return front == nullptr;
+	}
+	// getSize — returns number of items in the queue
+	int getSize() const {
+		return size;
+	}
+};
+
 //********** DOCTEST UNIT TESTS **********
 #ifdef _DEBUG
 
@@ -659,7 +791,6 @@ TEST_CASE("Overload operator[] & Class Template Test & Invalid Index Test") {
 
 	manager.addTrip(b);
 
-	
 	CHECK(manager[0] != nullptr);
 
 	CHECK_THROWS_AS(manager[1], std::out_of_range);
@@ -758,6 +889,185 @@ TEST_CASE("Iterator Test & Different Insertion Tests") {
 	CHECK(it.getData()->getLocation() == "Lake St. Clair");
 }
 
+// ===== ASSIGNMENT 11 ADDITION =====
+// Stack Tests
+TEST_CASE("Stack push and peek") {
+	TripStack<Distancetime> stack;
+
+	// test isEmpty on empty stack
+	CHECK(stack.isEmpty() == true);
+	CHECK(stack.getSize() == 0);
+
+	// create trips — stack does NOT own these so we manage them manually
+	Birdsseen* b1 = new Birdsseen();
+	b1->setLocation("Kensington");
+	b1->setTime(60);
+	b1->setBirdsseen(10);
+
+	Birdsseen* b2 = new Birdsseen();
+	b2->setLocation("Lake St. Clair");
+	b2->setTime(30);
+	b2->setBirdsseen(5);
+
+	// push first trip
+	stack.push(b1);
+	CHECK(stack.isEmpty() == false);
+	CHECK(stack.getSize() == 1);
+	CHECK(stack.peek()->getLocation() == "Kensington");
+
+	// push second trip — should now be on top
+	stack.push(b2);
+	CHECK(stack.getSize() == 2);
+	CHECK(stack.peek()->getLocation() == "Lake St. Clair");
+
+	// clean up trips manually since stack does not own them
+	delete b1;
+	delete b2;
+}
+
+TEST_CASE("Stack pop removes top item") {
+	TripStack<Distancetime> stack;
+
+	Birdsseen* b1 = new Birdsseen();
+	b1->setLocation("Kensington");
+
+	Birdsseen* b2 = new Birdsseen();
+	b2->setLocation("Lake St. Clair");
+
+	stack.push(b1);
+	stack.push(b2);
+
+	// pop top item — Lake St. Clair should be removed
+	stack.pop();
+	CHECK(stack.getSize() == 1);
+	CHECK(stack.peek()->getLocation() == "Kensington");
+
+	// pop last item
+	stack.pop();
+	CHECK(stack.isEmpty() == true);
+
+	// clean up
+	delete b1;
+	delete b2;
+}
+
+TEST_CASE("Stack throws on pop from empty stack") {
+	TripStack<Distancetime> stack;
+	// popping from empty stack should throw
+	CHECK_THROWS_AS(stack.pop(), std::out_of_range);
+}
+
+TEST_CASE("Stack throws on peek from empty stack") {
+	TripStack<Distancetime> stack;
+	// peeking empty stack should throw
+	CHECK_THROWS_AS(stack.peek(), std::out_of_range);
+}
+
+// ===== ASSIGNMENT 11 ADDITION =====
+// Queue Tests
+TEST_CASE("Queue enqueue and getFront") {
+	TripQueue<Distancetime> queue;
+
+	// test isEmpty on empty queue
+	CHECK(queue.isEmpty() == true);
+	CHECK(queue.getSize() == 0);
+
+	Birdsseen* b1 = new Birdsseen();
+	b1->setLocation("Kensington");
+	b1->setTime(60);
+	b1->setBirdsseen(10);
+
+	Birdsseen* b2 = new Birdsseen();
+	b2->setLocation("Lake St. Clair");
+	b2->setTime(30);
+	b2->setBirdsseen(5);
+
+	// enqueue first trip
+	queue.enqueue(b1);
+	CHECK(queue.isEmpty() == false);
+	CHECK(queue.getSize() == 1);
+	CHECK(queue.getFront()->getLocation() == "Kensington");
+
+	// enqueue second trip — front should still be Kensington
+	queue.enqueue(b2);
+	CHECK(queue.getSize() == 2);
+	CHECK(queue.getFront()->getLocation() == "Kensington");
+
+	// clean up
+	delete b1;
+	delete b2;
+}
+
+TEST_CASE("Queue dequeue removes front item") {
+	TripQueue<Distancetime> queue;
+
+	Birdsseen* b1 = new Birdsseen();
+	b1->setLocation("Kensington");
+
+	Birdsseen* b2 = new Birdsseen();
+	b2->setLocation("Lake St. Clair");
+
+	queue.enqueue(b1);
+	queue.enqueue(b2);
+
+	// dequeue front item — Kensington should be removed
+	queue.dequeue();
+	CHECK(queue.getSize() == 1);
+	CHECK(queue.getFront()->getLocation() == "Lake St. Clair");
+
+	// dequeue last item
+	queue.dequeue();
+	CHECK(queue.isEmpty() == true);
+
+	// clean up
+	delete b1;
+	delete b2;
+}
+
+TEST_CASE("Queue throws on dequeue from empty queue") {
+	TripQueue<Distancetime> queue;
+	// dequeuing from empty queue should throw
+	CHECK_THROWS_AS(queue.dequeue(), std::out_of_range);
+}
+
+TEST_CASE("Queue throws on getFront from empty queue") {
+	TripQueue<Distancetime> queue;
+	// getting front of empty queue should throw
+	CHECK_THROWS_AS(queue.getFront(), std::out_of_range);
+}
+
+TEST_CASE("Queue FIFO order test") {
+	TripQueue<Distancetime> queue;
+
+	Birdsseen* b1 = new Birdsseen();
+	b1->setLocation("First");
+
+	Birdsseen* b2 = new Birdsseen();
+	b2->setLocation("Second");
+
+	Birdsseen* b3 = new Birdsseen();
+	b3->setLocation("Third");
+
+	// enqueue three trips
+	queue.enqueue(b1);
+	queue.enqueue(b2);
+	queue.enqueue(b3);
+
+	// dequeue should come out in same order — First In First Out
+	CHECK(queue.getFront()->getLocation() == "First");
+	queue.dequeue();
+	CHECK(queue.getFront()->getLocation() == "Second");
+	queue.dequeue();
+	CHECK(queue.getFront()->getLocation() == "Third");
+	queue.dequeue();
+	CHECK(queue.isEmpty() == true);
+
+	// clean up
+	delete b1;
+	delete b2;
+	delete b3;
+}
+
 #else
 
 //********** MAIN FUNCTION **********
@@ -776,6 +1086,14 @@ int main() {
 
 	Manager<Distancetime> manager;
 
+	// ===== ASSIGNMENT 11 ADDITION =====
+	// Stack to track trip history — used to undo last added trip
+	TripStack<Distancetime> tripHistory;
+
+	// ===== ASSIGNMENT 11 ADDITION =====
+	// Queue to hold trips pending review
+	TripQueue<Distancetime> pendingReview;
+
 	SetConsoleTextAttribute(hConsole, 13);
 	cout << "Welcome to the Bird Stat Tracker" << endl;
 	SetConsoleTextAttribute(hConsole, 7);
@@ -790,7 +1108,7 @@ int main() {
 		do {
 			try {
 				if (time <= 0)
-				throw Enterzero();
+					throw Enterzero();
 			}
 			catch (Enterzero enterzero) {
 				cout << enterzero.what() << endl;
@@ -829,6 +1147,17 @@ int main() {
 			trip->setBirdspecies(speciesofbirds);
 
 			manager += trip;
+
+			// ===== ASSIGNMENT 11 ADDITION =====
+			// push trip pointer onto history stack
+			// stack does not own the trip — manager does
+			tripHistory.push(trip);
+
+			// ===== ASSIGNMENT 11 ADDITION =====
+			// enqueue trip pointer into pending review queue
+			// queue does not own the trip — manager does
+			pendingReview.enqueue(trip);
+
 			printSummary(*trip);
 		}
 		else {
@@ -843,6 +1172,15 @@ int main() {
 			trip->setFun(fun);
 
 			manager += trip;
+
+			// ===== ASSIGNMENT 11 ADDITION =====
+			// push trip pointer onto history stack
+			tripHistory.push(trip);
+
+			// ===== ASSIGNMENT 11 ADDITION =====
+			// enqueue trip pointer into pending review queue
+			pendingReview.enqueue(trip);
+
 			printSummary(*trip);
 		}
 
@@ -856,6 +1194,21 @@ int main() {
 	manager.printTrips();
 	cout << "Total trips taken: " << manager.countTripsRecursive() << endl;
 
+	// ===== ASSIGNMENT 11 ADDITION =====
+	// Show last added trip using stack peek
+	if (!tripHistory.isEmpty()) {
+		cout << "\nLast trip added (from stack history):" << endl;
+		tripHistory.peek()->Print();
+	}
+
+	// ===== ASSIGNMENT 11 ADDITION =====
+	// Process pending review queue — show all trips in order they were added
+	cout << "\nTrips pending review (queue order):" << endl;
+	while (!pendingReview.isEmpty()) {
+		pendingReview.getFront()->Print();
+		pendingReview.dequeue();
+	}
+
 	do {
 		cout << "Would you like to remove a birding trip? (Y/N)" << endl;
 		cin >> removeTrips;
@@ -865,7 +1218,7 @@ int main() {
 			cout << "Which trip would you like to remove?" << endl;
 			cin >> wantedTrip;
 			cin.ignore();
-			
+
 			try {
 				manager -= (wantedTrip - 1);
 			}
@@ -885,32 +1238,3 @@ int main() {
 	return 0;
 }
 #endif
-/*
-void printTable(const string& location, int time, double distance, _Type type, double birdsObserved, double hourlyAverage) {
-	cout << fixed << setprecision(2);
-
-	SetConsoleTextAttribute(hConsole, 13);
-	cout << setw(32) << setfill('*') << "" << setfill(' ') << endl;
-	SetConsoleTextAttribute(hConsole, 7);
-
-	cout << "   Location: " << setw(16) << location << endl;
-	cout << "   Minutes Birding: " << setw(9) << time << endl;
-	cout << "   Miles Traveled: " << setw(10) << distance << endl;
-	cout << "   Birds Seen: " << setw(14) << birdsObserved << endl;
-	cout << "   Average Birds: " << setw(11) << hourlyAverage << endl;
-
-	SetConsoleTextAttribute(hConsole, 13);
-	cout << setw(32) << setfill('*') << "" << endl;
-	SetConsoleTextAttribute(hConsole, 7);
-
-	ofstream outFile("report.txt");
-	outFile << setw(30) << setfill('*') << "" << setfill(' ') << endl;
-	outFile << "   Location: " << location << endl;
-	outFile << "   Minutes Birding: " << time << endl;
-	outFile << "   Miles Traveled: " << distance << endl;
-	outFile << "   Birds Seen: " << birdsObserved << endl;
-	outFile << "   Avg Birds/Hour: " << hourlyAverage << endl;
-	outFile << setw(30) << setfill('*') << "" << endl;
-	outFile.close();
-}
-*/
