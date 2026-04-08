@@ -2,8 +2,18 @@
 
 [![C++ DocTest](https://github.com/PaulTyree/WeeklyProgrammingAssignment/actions/workflows/BadgeTest.yml/badge.svg)](https://github.com/PaulTyree/WeeklyProgrammingAssignment/actions/workflows/BadgeTest.yml)
 
-This program takes in information about a user's birding trip(s) and neatly organizes the data while calculating the average amount of birds seen per hour.
-
+This program takes in information about a user's birding trip(s) and neatly organizes the data while calculating the average amount of birds seen per hour. 
+Test Output:
+```
+Type of Birding: Trail Birding
+Location Birding: Kensington
+Minutes Spent Birding: 60
+Miles Traveled: 1.4
+Birds Observed: 115
+Different Bird Species: 17
+Birds Seen per Hour: 115
+Total trips taken: 1
+```
 ## Week 6 is focused on operater overloading as well as templates.
 
 I have included several overloaded operators such as:
