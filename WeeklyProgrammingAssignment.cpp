@@ -381,9 +381,113 @@ public:
 };
 
 template <typename T>
+class Stack {
+private:
+	struct Node {
+		T* data;
+		Node* next;
+		Node(T* d) : data(d), next(nullptr) {}
+	};
+
+	Node* topNode;
+
+public:
+	Stack() : topNode(nullptr) {}
+
+	~Stack() {
+		while (!isEmpty()) pop();
+	}
+
+	void push(T* item) {
+		Node* newNode = new Node(item);
+		newNode->next = topNode;
+		topNode = newNode;
+	}
+
+	void pop() {
+		if (isEmpty())
+			throw std::underflow_error("Stack is empty");
+
+		Node* temp = topNode;
+		topNode = topNode->next;
+
+		delete temp;
+	}
+
+	T* peek() const {
+		if (isEmpty())
+			throw std::underflow_error("Stack is empty");
+
+		return topNode->data;
+	}
+
+	bool isEmpty() const {
+		return topNode == nullptr;
+	}
+};
+
+template <typename T>
+class Queue {
+private:
+	struct Node {
+		T* data;
+		Node* next;
+		Node(T* d) : data(d), next(nullptr) {}
+	};
+
+	Node* frontNode;
+	Node* rearNode;
+
+public:
+	Queue() : frontNode(nullptr), rearNode(nullptr) {}
+
+	~Queue() {
+		while (!isEmpty()) dequeue();
+	}
+
+	void enqueue(T* item) {
+		Node* newNode = new Node(item);
+
+		if (isEmpty()) {
+			frontNode = rearNode = newNode;
+		}
+		else {
+			rearNode->next = newNode;
+			rearNode = newNode;
+		}
+	}
+
+	void dequeue() {
+		if (isEmpty())
+			throw std::underflow_error("Queue is empty");
+
+		Node* temp = frontNode;
+		frontNode = frontNode->next;
+
+		if (!frontNode)
+			rearNode = nullptr;
+
+		delete temp;
+	}
+
+	T* front() const {
+		if (isEmpty())
+			throw std::underflow_error("Queue is empty");
+
+		return frontNode->data;
+	}
+
+	bool isEmpty() const {
+		return frontNode == nullptr;
+	}
+};
+
+template <typename T>
 class Manager {
 private:
 	LinkedList<T> items;
+	Stack<T> undoStack;
+	Queue<T> tripQueue;
 
 public:
 	Manager(int initialCapacity = 10) {}
@@ -392,6 +496,8 @@ public:
 
 	void addTrip(T* trip) {
 		items.insertBack(trip);
+		tripQueue.enqueue(trip);
+		undoStack.push(trip);
 	}
 
 	Manager& operator+=(T* trip) {
@@ -400,6 +506,9 @@ public:
 	}
 
 	void removeTrip(int index) {
+		T* removed = items.get(index);
+
+		undoStack.push(removed);
 		items.remove(index);
 	}
 
@@ -470,6 +579,26 @@ public:
 		}
 		return -1;
 	}
+
+	void undoLastAction() {
+		if (undoStack.isEmpty()) {
+			cout << "Nothing to undo\n";
+			return;
+		}
+
+		T* last = undoStack.peek();
+		cout << "Undoing last action:\n";
+		last->Print();
+
+		undoStack.pop();
+	}
+	//OPTIONAL
+	void printQueueFront() {
+		if (!tripQueue.isEmpty()) {
+			cout << "Next trip in queue:\n";
+			tripQueue.front()->Print();
+		}
+	}
 };
 
 template <typename T>
@@ -482,7 +611,7 @@ private:
 	string message;
 public:
 	Enterzero() {
-		message = "Please input a number larger than 0:";
+		message = "Please input a valid number:";
 	}
 	Enterzero(string str) {
 		message = str;
@@ -758,6 +887,66 @@ TEST_CASE("Iterator Test & Different Insertion Tests") {
 	CHECK(it.getData()->getLocation() == "Lake St. Clair");
 }
 
+TEST_CASE("Stack Basic Operations") {
+	Stack<Distancetime> stack;
+
+	CHECK(stack.isEmpty());
+
+	Birdsseen* b = new Birdsseen();
+	b->setLocation("Stack Test");
+
+	stack.push(b);
+
+	CHECK_FALSE(stack.isEmpty());
+	CHECK(stack.peek()->getLocation() == "Stack Test");
+
+	stack.pop();
+	CHECK(stack.isEmpty());
+}
+
+TEST_CASE("Stack Edge Case - Pop Empty") {
+	Stack<Distancetime> stack;
+	CHECK_THROWS_AS(stack.pop(), std::underflow_error);
+}
+
+TEST_CASE("Stack Edge Case - Peek Empty") {
+	Stack<Distancetime> stack;
+	CHECK_THROWS_AS(stack.peek(), std::underflow_error);
+}
+
+TEST_CASE("Queue Basic Operations") {
+	Queue<Distancetime> queue;
+
+	CHECK(queue.isEmpty());
+
+	Birdsseen* b1 = new Birdsseen();
+	b1->setLocation("First");
+
+	Birdsseen* b2 = new Birdsseen();
+	b2->setLocation("Second");
+
+	queue.enqueue(b1);
+	queue.enqueue(b2);
+
+	CHECK(queue.front()->getLocation() == "First");
+
+	queue.dequeue();
+	CHECK(queue.front()->getLocation() == "Second");
+
+	queue.dequeue();
+	CHECK(queue.isEmpty());
+}
+
+TEST_CASE("Queue Edge Case - Dequeue Empty") {
+	Queue<Distancetime> queue;
+	CHECK_THROWS_AS(queue.dequeue(), std::underflow_error);
+}
+
+TEST_CASE("Queue Edge Case - Front Empty") {
+	Queue<Distancetime> queue;
+	CHECK_THROWS_AS(queue.front(), std::underflow_error);
+}
+
 #else
 
 //********** MAIN FUNCTION **********
@@ -785,30 +974,85 @@ int main() {
 		getline(cin, location);
 
 		cout << "How many minutes did you go birding?" << endl;
-		cin >> time;
-
 		do {
 			try {
-				if (time <= 0)
-				throw Enterzero();
+				cin >> time;
+				if (time <= 0) {
+					cin.clear();
+					cin.ignore(100, '\n');
+					throw Enterzero();
+				}
+				break;
 			}
 			catch (Enterzero enterzero) {
 				cout << enterzero.what() << endl;
-				cin >> time;
 			}
-		} while (time <= 0);
+		} while (true);
 
 		cout << "How many miles did you travel while birding?" << endl;
-		cin >> distance;
+		do {
+			try {
+				cin >> distance;
+				if (cin.fail() || distance < 0) {
+					cin.clear();
+					cin.ignore(1000, '\n');
+					throw Enterzero();
+				}
+				break;
+			}
+			catch (Enterzero& enterzero) {
+				cout << enterzero.what() << endl;
+			}
+		} while (true);
 
 		cout << "What type of birding did you do? (0 = Trail, 1 = Car, 2 = Park): " << endl;
-		cin >> typechoice;
+		do {
+			try {
+				cin >> typechoice;
+				if (cin.fail() || typechoice != 0 && typechoice != 1 && typechoice != 2) {
+					cin.clear();
+					cin.ignore(100, '\n');
+					throw Enterzero();
+				}
+				break;
+			}
+			catch (Enterzero enterzero) {
+				cout << enterzero.what() << endl;
+			}
+		} while (true);
 
 		cout << "How many birds did you see?" << endl;
-		cin >> birdsobserved;
+		do {
+			try {
+				cin >> birdsobserved;
+				if (cin.fail() || birdsobserved < 0) {
+					cin.clear();
+					cin.ignore(1000, '\n');
+					throw Enterzero();
+				}
+				break;
+			}
+			catch (Enterzero& enterzero) {
+				cout << enterzero.what() << endl;
+			}
+		} while (true);
 
 		cout << "How many different species of birds did you observe?" << endl;
-		cin >> speciesofbirds;
+		do {
+			try {
+				cin >> speciesofbirds;
+				if (cin.fail() || speciesofbirds < 0) {
+					cin.clear();
+					cin.ignore(1000, '\n');
+					throw Enterzero();
+				}
+				break;
+			}
+			catch (Enterzero& enterzero) {
+				cout << enterzero.what() << endl;
+			}
+		} while (true);
+
 		cin.ignore();
 
 		_Type birdingtype;
