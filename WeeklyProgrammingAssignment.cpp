@@ -10,7 +10,7 @@
 // ********** MEMORY LEAK STATEMENTS **********
 #define _CRTDBG_MAP_ALLOC
 #include <stdlib.h>
-#include <crtdbg.h>
+#include <crtdbg.h> 
 
 #ifdef _DEBUG
 #define DBG_NEW new ( _NORMAL_BLOCK , __FILE__ , __LINE__ )
@@ -28,6 +28,7 @@
 #include <windows.h>
 #include <sstream>
 #include <vector>
+#include <map> // from C++ STL
 
 using namespace std;
 HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
@@ -489,6 +490,23 @@ private:
 	Stack<T> undoStack;
 	Queue<T> tripQueue;
 
+	// Map for frequency
+	// Key = birding type as string and value is number of trips for each type
+	map<string, int> typeCount;
+
+	// Method for converting the _Type enum to a string for key
+	string convertTypeToString(_Type t) const {
+		switch(t)
+		{
+			case TRAIL:
+				return "Trail";
+			case CAR:
+				return "Car";
+			case PARK:
+				return "Park";
+		}
+	}
+
 public:
 	Manager(int initialCapacity = 10) {}
 
@@ -498,6 +516,9 @@ public:
 		items.insertBack(trip);
 		tripQueue.enqueue(trip);
 		undoStack.push(trip);
+
+		// Inserting to the map
+		typeCount[convertTypeToString(trip->getType())]++;
 	}
 
 	Manager& operator+=(T* trip) {
@@ -529,6 +550,27 @@ public:
 			it.getData()->Print();
 			it.next();
 		}
+	}
+
+	// Print Method for iterating through the map and printing all key-value pairs
+	void printTypeCount() const {
+		SetConsoleTextAttribute(hConsole, 11);
+		cout << "--- Trips by Birding Type ---" << endl;
+		SetConsoleTextAttribute(hConsole, 7);
+
+		for (const auto& pair : typeCount){
+			cout << " " << pair.first << ": " << pair.second << " trip(s)" << endl;
+		}
+		cout << "-------------------------------" << endl;
+	}
+
+	// Method for returning how many trips exist for a given type name
+	int getTypeCount(const string& typeName) const {
+		auto it = typeCount.find(typeName);
+		if(it != typeCount.end()){
+			return it->second;
+		}
+		return 0;
 	}
 
 	int getSize() const {
@@ -945,6 +987,49 @@ TEST_CASE("Queue Edge Case - Dequeue Empty") {
 TEST_CASE("Queue Edge Case - Front Empty") {
 	Queue<Distancetime> queue;
 	CHECK_THROWS_AS(queue.front(), std::underflow_error);
+}
+
+// Test Cases for Maps
+TEST_CASE("Insert in Map and typeCount increments"){
+	Manager<Distancetime> manager;
+
+	Birdsseen* b1 = new Birdsseen();
+	b1->setLocation("A");
+	b1->setType(TRAIL);
+	b1->setTime(30);
+	b1->setBirdsseen(5);
+	manager.addTrip(b1);
+
+	Birdsseen* b2 = new Birdsseen();
+	b1->setLocation("B");
+	b1->setType(TRAIL);
+	b1->setTime(60);
+	b1->setBirdsseen(10);
+	manager.addTrip(b1);
+
+	Nobirds* n1 = new Nobirds();
+	n1->setLocation("C");
+	n1->setType(CAR);
+	n1->setTime(20);
+	n1->setFun("Yes");
+	manager.addTrip(n1);
+
+	CHECK(manager.getTypeCount("Trail") == 2);
+	CHECK(manager.getTypeCount("Car") == 1);
+	CHECK(manager.getTypeCount("Park") == 0);
+}
+
+TEST_CASE("Iterate Map - printTypeCount"){
+	Manager<Distancetime> manager;
+	Birdsseen* b = new Birdsseen();
+	b->setLocation("X");
+	b->setType(PARK);
+	b->setTime(45);
+	b->setBirdsseen(3);
+	manager.addTrip(b);
+
+	CHECK_NOTHROW(manager.printTypeCount());
+
 }
 
 #else
