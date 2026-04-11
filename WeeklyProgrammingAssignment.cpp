@@ -1001,11 +1001,11 @@ TEST_CASE("Insert in Map and typeCount increments"){
 	manager.addTrip(b1);
 
 	Birdsseen* b2 = new Birdsseen();
-	b1->setLocation("B");
-	b1->setType(TRAIL);
-	b1->setTime(60);
-	b1->setBirdsseen(10);
-	manager.addTrip(b1);
+	b2->setLocation("B");
+	b2->setType(TRAIL);
+	b2->setTime(60);
+	b2->setBirdsseen(10);
+	manager.addTrip(b2);
 
 	Nobirds* n1 = new Nobirds();
 	n1->setLocation("C");
