@@ -29,8 +29,10 @@
 #include <sstream>
 #include <vector>
 #include <map> // from C++ STL
+#include "json.hpp"
 
 using namespace std;
+using json = nlohmann::json;
 HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
 
 //********** Enum To Determine What Style of Birding **********
@@ -39,9 +41,6 @@ enum _Type {
 	CAR,
 	PARK
 };
-
-//********** PRINT TABLE FUNCTION (NOT USED CURRENTLY) **********
-//void printTable(const string& location, int time, double distance, _Type type, double birdsObserved, double hourlyAverage);
 
 //********** Base Class To Determine Time, Distance, Location, and Type of Birding **********
 class Distancetime {
@@ -496,14 +495,14 @@ private:
 
 	// Method for converting the _Type enum to a string for key
 	string convertTypeToString(_Type t) const {
-		switch(t)
+		switch (t)
 		{
-			case TRAIL:
-				return "Trail";
-			case CAR:
-				return "Car";
-			case PARK:
-				return "Park";
+		case TRAIL:
+			return "Trail";
+		case CAR:
+			return "Car";
+		case PARK:
+			return "Park";
 		}
 	}
 
@@ -552,13 +551,28 @@ public:
 		}
 	}
 
+	void displayMenu() const {
+		cout << "\n************************************" << endl;
+		SetConsoleTextAttribute(hConsole, 13);
+		cout << "        Birding Trip Tracker        " << endl;
+		SetConsoleTextAttribute(hConsole, 7);
+		cout << "************************************\n" << endl;
+		cout << "1. Add a Trip" << endl;
+		cout << "2. Remove a Trip" << endl;
+		cout << "3. Save Trips" << endl;
+		cout << "4. Load Trips" << endl;
+		cout << "5. View Trips" << endl;
+		cout << "6. Quit Program" << endl;
+		cout << "Please Choose an Option" << endl;
+	}
+
 	// Print Method for iterating through the map and printing all key-value pairs
 	void printTypeCount() const {
 		SetConsoleTextAttribute(hConsole, 11);
 		cout << "--- Trips by Birding Type ---" << endl;
 		SetConsoleTextAttribute(hConsole, 7);
 
-		for (const auto& pair : typeCount){
+		for (const auto& pair : typeCount) {
 			cout << " " << pair.first << ": " << pair.second << " trip(s)" << endl;
 		}
 		cout << "-------------------------------" << endl;
@@ -567,7 +581,7 @@ public:
 	// Method for returning how many trips exist for a given type name
 	int getTypeCount(const string& typeName) const {
 		auto it = typeCount.find(typeName);
-		if(it != typeCount.end()){
+		if (it != typeCount.end()) {
 			return it->second;
 		}
 		return 0;
@@ -639,6 +653,136 @@ public:
 		if (!tripQueue.isEmpty()) {
 			cout << "Next trip in queue:\n";
 			tripQueue.front()->Print();
+		}
+	}
+
+	void tryJSON() {
+		try {
+			loadFromJSON("trips.json");
+		}
+		catch (const exception& e) {
+			cout << e.what() << endl;
+		}
+		items.clear();
+	}
+
+	void saveToJSON(const string& filename) const {
+		ofstream outFile(filename);
+
+		try {
+			if (!outFile.is_open()) {
+				throw runtime_error("Could not open file for writing");
+			}
+
+			json j = json::array();
+
+			// ----------- ITERATE EXISTING LINKED LIST -----------
+			auto it = items.begin();
+
+			while (it.hasNext()) {
+				T* trip = it.getData();
+
+				json obj;
+
+				switch (trip->getType()) {
+				case TRAIL: obj["type"] = "Trail"; break;
+				case CAR: obj["type"] = "Car"; break;
+				case PARK: obj["type"] = "Park"; break;
+				}
+
+				obj["location"] = trip->getLocation();
+				obj["time"] = trip->getTime();
+				obj["distance"] = trip->getDistance();
+
+				if (trip->getBirdCount() > 0) {
+					Birdsseen* b = dynamic_cast<Birdsseen*>(trip);
+
+					if (b) {
+						obj["birds"] = b->getBirdsseen();
+						obj["species"] = b->getBirdspecies();
+					}
+				}
+				else {
+					Nobirds* n = dynamic_cast<Nobirds*>(trip);
+
+					if (n) {
+						obj["birds"] = 0;
+						obj["fun"] = n->getFun();
+					}
+				}
+
+				j.push_back(obj);
+				it.next();
+			}
+
+			outFile << setw(4) << j << endl;
+
+		}
+		catch (exception& e) {
+			cout << "JSON Save Error: " << e.what() << endl;
+		}
+	}
+
+	void loadFromJSON(const string& filename) {
+		ifstream inFile(filename);
+
+		try {
+			if (!inFile.is_open()) {
+				throw runtime_error("File not found");
+			}
+
+			json j;
+			inFile >> j;
+
+			if (!j.is_array()) {
+				throw runtime_error("Invalid JSON format: expected array");
+			}
+
+			for (const auto& item : j) {
+
+				string typeStr = item.at("type");
+				string location = item.at("location");
+				int time = item.at("time");
+				double distance = item.at("distance");
+
+				_Type type;
+				if (typeStr == "Trail") type = TRAIL;
+				else if (typeStr == "Car") type = CAR;
+				else type = PARK;
+
+				if (item.contains("birds") && item.at("birds") > 0) {
+					Birdsseen* trip = new Birdsseen();
+
+					trip->setLocation(location);
+					trip->setTime(time);
+					trip->setDistance(distance);
+					trip->setType(type);
+					trip->setBirdsseen(item.at("birds"));
+
+					if (item.contains("species"))
+						trip->setBirdspecies(item.at("species"));
+
+					addTrip(trip);
+				}
+				else {
+					Nobirds* trip = new Nobirds();
+
+					trip->setLocation(location);
+					trip->setTime(time);
+					trip->setDistance(distance);
+					trip->setType(type);
+
+					if (item.contains("fun"))
+						trip->setFun(item.at("fun"));
+					else
+						trip->setFun("Unknown");
+
+					addTrip(trip);
+				}
+			}
+		}
+		catch (exception& e) {
+			cout << "JSON Load Error: " << e.what() << endl;
 		}
 	}
 };
@@ -830,7 +974,7 @@ TEST_CASE("Overload operator[] & Class Template Test & Invalid Index Test") {
 
 	manager.addTrip(b);
 
-	
+
 	CHECK(manager[0] != nullptr);
 
 	CHECK_THROWS_AS(manager[1], std::out_of_range);
@@ -990,7 +1134,7 @@ TEST_CASE("Queue Edge Case - Front Empty") {
 }
 
 // Test Cases for Maps
-TEST_CASE("Insert in Map and typeCount increments"){
+TEST_CASE("Insert in Map and typeCount increments") {
 	Manager<Distancetime> manager;
 
 	Birdsseen* b1 = new Birdsseen();
@@ -1019,7 +1163,7 @@ TEST_CASE("Insert in Map and typeCount increments"){
 	CHECK(manager.getTypeCount("Park") == 0);
 }
 
-TEST_CASE("Iterate Map - printTypeCount"){
+TEST_CASE("Iterate Map - printTypeCount") {
 	Manager<Distancetime> manager;
 	Birdsseen* b = new Birdsseen();
 	b->setLocation("X");
@@ -1030,6 +1174,67 @@ TEST_CASE("Iterate Map - printTypeCount"){
 
 	CHECK_NOTHROW(manager.printTypeCount());
 
+}
+
+TEST_CASE("JSON Load Success") {
+	Manager<Distancetime> manager;
+
+	manager.loadFromJSON("trips.json");
+
+	CHECK(manager.getSize() >= 5);
+}
+
+TEST_CASE("JSON File Not Found") {
+	Manager<Distancetime> manager;
+
+	CHECK_NOTHROW(manager.loadFromJSON("does_not_exist.json"));
+}
+
+TEST_CASE("Malformed JSON Handling") {
+	Manager<Distancetime> manager;
+
+	CHECK_NOTHROW(manager.loadFromJSON("bad.json"));
+}
+
+TEST_CASE("JSON Save Test") {
+	Manager<Distancetime> manager;
+
+	Birdsseen* b = new Birdsseen();
+	b->setLocation("Test Save");
+	b->setTime(60);
+	b->setDistance(1.0);
+	b->setType(TRAIL);
+	b->setBirdsseen(10);
+	b->setBirdspecies(2);
+
+	manager.addTrip(b);
+
+	CHECK_NOTHROW(manager.saveToJSON("test_output.json"));
+
+	ifstream inFile("test_output.json");
+	CHECK(inFile.is_open());
+}
+
+TEST_CASE("Save and Reload Consistency") {
+	Manager<Distancetime> manager;
+
+	Birdsseen* b = new Birdsseen();
+	b->setLocation("Consistency");
+	b->setTime(60);
+	b->setDistance(2.0);
+	b->setType(CAR);
+	b->setBirdsseen(20);
+	b->setBirdspecies(5);
+
+	manager.addTrip(b);
+
+	manager.saveToJSON("consistency.json");
+
+	Manager<Distancetime> newManager;
+	newManager.loadFromJSON("consistency.json");
+
+	CHECK(newManager.getSize() == 1);
+	CHECK(newManager[0]->getLocation() == "Consistency");
 }
 
 #else
@@ -1047,199 +1252,211 @@ int main() {
 	char moreTrips = 'y';
 	char removeTrips = 'y';
 	int wantedTrip;
+	int choice = 0;
+	int leavechoice = 0;
 
 	Manager<Distancetime> manager;
 
-	SetConsoleTextAttribute(hConsole, 13);
-	cout << "Welcome to the Bird Stat Tracker" << endl;
-	SetConsoleTextAttribute(hConsole, 7);
+	manager.tryJSON();
 
-	do {
-		cout << "Where did you go birding?" << endl;
-		getline(cin, location);
-
-		cout << "How many minutes did you go birding?" << endl;
-		do {
-			try {
-				cin >> time;
-				if (time <= 0) {
-					cin.clear();
-					cin.ignore(100, '\n');
-					throw Enterzero();
-				}
-				break;
-			}
-			catch (Enterzero enterzero) {
-				cout << enterzero.what() << endl;
-			}
-		} while (true);
-
-		cout << "How many miles did you travel while birding?" << endl;
-		do {
-			try {
-				cin >> distance;
-				if (cin.fail() || distance < 0) {
-					cin.clear();
-					cin.ignore(1000, '\n');
-					throw Enterzero();
-				}
-				break;
-			}
-			catch (Enterzero& enterzero) {
-				cout << enterzero.what() << endl;
-			}
-		} while (true);
-
-		cout << "What type of birding did you do? (0 = Trail, 1 = Car, 2 = Park): " << endl;
-		do {
-			try {
-				cin >> typechoice;
-				if (cin.fail() || typechoice != 0 && typechoice != 1 && typechoice != 2) {
-					cin.clear();
-					cin.ignore(100, '\n');
-					throw Enterzero();
-				}
-				break;
-			}
-			catch (Enterzero enterzero) {
-				cout << enterzero.what() << endl;
-			}
-		} while (true);
-
-		cout << "How many birds did you see?" << endl;
-		do {
-			try {
-				cin >> birdsobserved;
-				if (cin.fail() || birdsobserved < 0) {
-					cin.clear();
-					cin.ignore(1000, '\n');
-					throw Enterzero();
-				}
-				break;
-			}
-			catch (Enterzero& enterzero) {
-				cout << enterzero.what() << endl;
-			}
-		} while (true);
-
-		cout << "How many different species of birds did you observe?" << endl;
-		do {
-			try {
-				cin >> speciesofbirds;
-				if (cin.fail() || speciesofbirds < 0) {
-					cin.clear();
-					cin.ignore(1000, '\n');
-					throw Enterzero();
-				}
-				break;
-			}
-			catch (Enterzero& enterzero) {
-				cout << enterzero.what() << endl;
-			}
-		} while (true);
-
-		cin.ignore();
-
-		_Type birdingtype;
-		switch (typechoice) {
-		case 0: birdingtype = TRAIL; break;
-		case 1: birdingtype = CAR; break;
-		case 2: birdingtype = PARK; break;
-		default: birdingtype = TRAIL; break;
+	while (choice != 6) {
+		manager.displayMenu();
+		cin >> choice;
+		if (cin.fail()) {
+			cin.clear();
+			cin.ignore(10000, '\n');
+			cout << "Error: You can not use special characters in this menu.\n";
+			choice = 0;
+			continue;
 		}
 
-		if (birdsobserved > 0) {
-			Birdsseen* trip = new Birdsseen();
-			trip->setLocation(location);
-			trip->setTime(time);
-			trip->setDistance(distance);
-			trip->setType(birdingtype);
-			trip->setBirdsseen(birdsobserved);
-			trip->setBirdspecies(speciesofbirds);
+		switch (choice) {
+		case 1:
+			cin.clear();
+			cin.ignore(100, '\n');
+			cout << "Where did you go birding?" << endl;
+			getline(cin, location);
 
-			manager += trip;
-			printSummary(*trip);
-		}
-		else {
-			cout << "Did you still have fun and enjoy the nature? (Yes/No): " << endl;
-			getline(cin, fun);
+			cout << "How many minutes did you go birding?" << endl;
+			do {
+				try {
+					cin >> time;
+					if (time <= 0) {
+						cin.clear();
+						cin.ignore(100, '\n');
+						throw Enterzero();
+					}
+					break;
+				}
+				catch (Enterzero enterzero) {
+					cout << enterzero.what() << endl;
+				}
+			} while (true);
 
-			Nobirds* trip = new Nobirds();
-			trip->setLocation(location);
-			trip->setTime(time);
-			trip->setDistance(distance);
-			trip->setType(birdingtype);
-			trip->setFun(fun);
+			cout << "How many miles did you travel while birding?" << endl;
+			do {
+				try {
+					cin >> distance;
+					if (cin.fail() || distance < 0) {
+						cin.clear();
+						cin.ignore(1000, '\n');
+						throw Enterzero();
+					}
+					break;
+				}
+				catch (Enterzero& enterzero) {
+					cout << enterzero.what() << endl;
+				}
+			} while (true);
 
-			manager += trip;
-			printSummary(*trip);
-		}
+			cout << "What type of birding did you do? (0 = Trail, 1 = Car, 2 = Park): " << endl;
+			do {
+				try {
+					cin >> typechoice;
+					if (cin.fail() || typechoice != 0 && typechoice != 1 && typechoice != 2) {
+						cin.clear();
+						cin.ignore(100, '\n');
+						throw Enterzero();
+					}
+					break;
+				}
+				catch (Enterzero enterzero) {
+					cout << enterzero.what() << endl;
+				}
+			} while (true);
 
-		cout << "Would you like to add another birding trip? (Y/N)" << endl;
-		cin >> moreTrips;
-		cin.ignore();
+			cout << "How many birds did you see?" << endl;
+			do {
+				try {
+					cin >> birdsobserved;
+					if (cin.fail() || birdsobserved < 0) {
+						cin.clear();
+						cin.ignore(1000, '\n');
+						throw Enterzero();
+					}
+					break;
+				}
+				catch (Enterzero& enterzero) {
+					cout << enterzero.what() << endl;
+				}
+			} while (true);
 
-	} while (moreTrips == 'y' || moreTrips == 'Y');
+			cout << "How many different species of birds did you observe?" << endl;
+			do {
+				try {
+					cin >> speciesofbirds;
+					if (cin.fail() || speciesofbirds < 0) {
+						cin.clear();
+						cin.ignore(1000, '\n');
+						throw Enterzero();
+					}
+					break;
+				}
+				catch (Enterzero& enterzero) {
+					cout << enterzero.what() << endl;
+				}
+			} while (true);
 
-	cout << "\nAll Birding Trips:" << endl;
-	manager.printTrips();
-	cout << "Total trips taken: " << manager.countTripsRecursive() << endl;
-
-	do {
-		cout << "Would you like to remove a birding trip? (Y/N)" << endl;
-		cin >> removeTrips;
-		cin.ignore();
-
-		if (removeTrips == 'y' || removeTrips == 'Y') {
-			cout << "Which trip would you like to remove?" << endl;
-			cin >> wantedTrip;
 			cin.ignore();
-			
+
+			_Type birdingtype;
+			switch (typechoice) {
+			case 0: birdingtype = TRAIL; break;
+			case 1: birdingtype = CAR; break;
+			case 2: birdingtype = PARK; break;
+			default: birdingtype = TRAIL; break;
+			}
+
+			if (birdsobserved > 0) {
+				Birdsseen* trip = new Birdsseen();
+				trip->setLocation(location);
+				trip->setTime(time);
+				trip->setDistance(distance);
+				trip->setType(birdingtype);
+				trip->setBirdsseen(birdsobserved);
+				trip->setBirdspecies(speciesofbirds);
+
+				manager += trip;
+				printSummary(*trip);
+			}
+			else {
+				cout << "Did you still have fun and enjoy the nature? (Yes/No): " << endl;
+				getline(cin, fun);
+
+				Nobirds* trip = new Nobirds();
+				trip->setLocation(location);
+				trip->setTime(time);
+				trip->setDistance(distance);
+				trip->setType(birdingtype);
+				trip->setFun(fun);
+
+				manager += trip;
+				printSummary(*trip);
+			}
+			break;
+		case 2:
+			cin.clear();
+			cin.ignore(100, '\n');
+			cout << "Which trip would you like to remove?" << endl;
+			manager.printTrips();
+			cin >> wantedTrip;
+
 			try {
 				manager -= (wantedTrip - 1);
 			}
 			catch (std::out_of_range& exception) {
 				cout << exception.what() << endl;
+				break;
 			}
+		case 3:
+			manager.saveToJSON("trips.json");
+			cout << "Trips Saved From JSON";
+			break;
+		case 4:
+			manager.loadFromJSON("trips.json");
+			cout << "Trips Loaded From JSON";
+			break;
+		case 5:
+			manager.printTrips();
+			cout << "Total Trips Taken: " << manager.countTripsRecursive() << endl;
+			break;
+		case 6:
+			cin.clear();
+			cin.ignore(100, '\n');
+			while (leavechoice == 0) {
+				cout << "Are You Sure?" << endl;
+				cout << "1. Yes, Quit" << endl;
+				cout << "2. No, Stay" << endl;
+				cin >> leavechoice;
+
+				if (cin.fail()) {
+					cin.clear();
+					cin.ignore(10000, '\n');
+					cout << "Error: You can not use special characters in this menu.\n";
+					leavechoice = 0;
+					continue;
+				}
+
+				switch (leavechoice) {
+				case 1:
+					cout << "Goodbye!" << endl;
+					break;
+				case 2:
+					choice = 0;
+					break;
+				default:
+					cout << "Invalid choice. Try again.\n";
+				}
+			}
+			leavechoice = 0;
+			break;
+		default:
+			cout << "Invalid choice. Try again.\n";
 		}
-
-	} while (removeTrips == 'y' || removeTrips == 'Y');
-
-	cout << "\nUpdated Birding Trips:" << endl;
-	manager.printTrips();
-	cout << "Total trips taken: " << manager.countTripsRecursive() << endl;
+	}
 
 	_CrtDumpMemoryLeaks();
 
 	return 0;
 }
 #endif
-/*
-void printTable(const string& location, int time, double distance, _Type type, double birdsObserved, double hourlyAverage) {
-	cout << fixed << setprecision(2);
-
-	SetConsoleTextAttribute(hConsole, 13);
-	cout << setw(32) << setfill('*') << "" << setfill(' ') << endl;
-	SetConsoleTextAttribute(hConsole, 7);
-
-	cout << "   Location: " << setw(16) << location << endl;
-	cout << "   Minutes Birding: " << setw(9) << time << endl;
-	cout << "   Miles Traveled: " << setw(10) << distance << endl;
-	cout << "   Birds Seen: " << setw(14) << birdsObserved << endl;
-	cout << "   Average Birds: " << setw(11) << hourlyAverage << endl;
-
-	SetConsoleTextAttribute(hConsole, 13);
-	cout << setw(32) << setfill('*') << "" << endl;
-	SetConsoleTextAttribute(hConsole, 7);
-
-	ofstream outFile("report.txt");
-	outFile << setw(30) << setfill('*') << "" << setfill(' ') << endl;
-	outFile << "   Location: " << location << endl;
-	outFile << "   Minutes Birding: " << time << endl;
-	outFile << "   Miles Traveled: " << distance << endl;
-	outFile << "   Birds Seen: " << birdsObserved << endl;
-	outFile << "   Avg Birds/Hour: " << hourlyAverage << endl;
-	outFile << setw(30) << setfill('*') << "" << endl;
-	outFile.close();
-}
-*/

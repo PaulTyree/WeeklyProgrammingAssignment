@@ -1,0 +1,50 @@
+[
+    {
+        "birds": 15.0,
+        "distance": 2.5,
+        "location": "Kensington",
+        "species": 5,
+        "time": 60,
+        "type": "Trail"
+    },
+    {
+        "birds": 25.0,
+        "distance": 10.0,
+        "location": "Lake St. Clair",
+        "species": 8,
+        "time": 120,
+        "type": "Car"
+    },
+    {
+        "birds": 0,
+        "distance": 1.2,
+        "fun": "Yes",
+        "location": "Belle Isle",
+        "time": 45,
+        "type": "Park"
+    },
+    {
+        "birds": 12.0,
+        "distance": 3.1,
+        "location": "Stony Creek",
+        "species": 4,
+        "time": 90,
+        "type": "Trail"
+    },
+    {
+        "birds": 0,
+        "distance": 0.8,
+        "fun": "No",
+        "location": "Gallup Park",
+        "time": 30,
+        "type": "Park"
+    },
+    {
+        "birds": 78.0,
+        "distance": 1.25,
+        "location": "Kensington2",
+        "species": 9,
+        "time": 145,
+        "type": "Trail"
+    }
+]
