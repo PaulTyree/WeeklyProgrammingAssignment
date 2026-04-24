@@ -30,6 +30,7 @@
 #include <vector>
 #include <map> // from C++ STL
 #include "json.hpp"
+#include "HttpClient.h"
 
 using namespace std;
 using json = nlohmann::json;
@@ -237,6 +238,28 @@ public:
 		Distancetime::Print();
 		cout << "Birds Observed: 0" << endl;
 		cout << "Did You Have Fun Regardless: " << _fun << endl;
+	}
+};
+
+class BirdAPIClient : public HttpClient {
+private:
+	std::string response;
+
+protected:
+	void StartOfData() override {
+		response.clear();
+	}
+
+	void Data(const char* data, const unsigned int size) override {
+		response.append(data, size);
+	}
+
+	void EndOfData() override {
+	}
+
+public:
+	std::string GetResponse() const {
+		return response;
 	}
 };
 
@@ -562,7 +585,9 @@ public:
 		cout << "3. Save Trips" << endl;
 		cout << "4. Load Trips" << endl;
 		cout << "5. View Trips" << endl;
-		cout << "6. Quit Program" << endl;
+		cout << "6. Send a Joke To API" << endl;
+		cout << "7. Load a Joke From API" << endl;
+		cout << "8. Quit Program" << endl;
 		cout << "Please Choose an Option" << endl;
 	}
 
@@ -676,7 +701,6 @@ public:
 
 			json j = json::array();
 
-			// ----------- ITERATE EXISTING LINKED LIST -----------
 			auto it = items.begin();
 
 			while (it.hasNext()) {
@@ -783,6 +807,101 @@ public:
 		}
 		catch (exception& e) {
 			cout << "JSON Load Error: " << e.what() << endl;
+		}
+	}
+
+	//Function to allow user to write jokes to API after user selects menu option
+	void getJoke() {
+		string usersetup;
+		string userpunchline;
+		string usercategory;
+
+		cin.ignore();
+
+		cout << "Enter Joke Category (programming, general, or math:" << endl;
+		getline(cin, usercategory);
+
+		cout << "Enter Joke Setup:" << endl;
+		getline(cin, usersetup);
+
+		cout << "Enter Joke Punchline:" << endl;
+		getline(cin, userpunchline);
+
+		sendToAPI(usersetup, userpunchline, usercategory);
+	}
+
+	// Function to send jokes from API after the function getJoke passes
+	void sendToAPI(const string& usersetup, const string& userpunchline, const string& usercategory) {
+		BirdAPIClient client;
+
+		try {
+			if (!client.Connect("api.macomb.io", 80)) {
+				throw runtime_error("Failed to connect to API");
+			}
+
+			json j;
+			j["category"] = usercategory;
+			j["setup"] = usersetup;
+			j["punchline"] = userpunchline;
+
+			string body = j.dump();
+
+			client.Post("/jokes", body);
+
+			string response = client.GetResponse();
+
+			json res = json::parse(response);
+
+			if (res.contains("joke") && res["joke"].contains("id")) {
+				cout << "New item created with ID: " << res["joke"]["id"] << endl;
+			}
+			else {
+				cout << "POST CREATED but no ID returned" << endl;
+			}
+
+		}
+		catch (json::exception& e) {
+			cout << "POST JSON Parse Error: " << e.what() << endl;
+		}
+		catch (exception& e) {
+			cout << "POST Error: " << e.what() << endl;
+		}
+	}
+
+	// Function to load jokes from API after user selects menu option
+	void loadFromAPI() {
+		BirdAPIClient client;
+
+		try {
+			if (!client.Connect("api.macomb.io", 80)) {
+				throw runtime_error("Failed to connect to API");
+			}
+
+			client.Get("/jokes");
+
+			string response = client.GetResponse();
+			cout << response << endl;
+			json j = json::parse(response);
+
+			if (!j.contains("jokes")) {
+				throw runtime_error("Invalid API response: missing 'jokes'");
+			}
+
+			auto jokes = j["jokes"];
+
+			cout << "\n--- JOKES FROM API ---\n";
+
+			for (const auto& joke : jokes) {
+				cout << "Setup: " << joke.at("setup") << endl;
+				cout << "Punchline: " << joke.at("punchline") << endl;
+				cout << "----------------------\n";
+			}
+		}
+		catch (json::exception& e) {
+			cout << "JSON Parse Error: " << e.what() << endl;
+		}
+		catch (exception& e) {
+			cout << "API Error: " << e.what() << endl;
 		}
 	}
 };
@@ -1237,6 +1356,16 @@ TEST_CASE("Save and Reload Consistency") {
 	CHECK(newManager[0]->getLocation() == "Consistency");
 }
 
+TEST_CASE("POST to API/GET from API Test") {
+	Manager<Distancetime> manager;
+
+	CHECK_NOTHROW(manager.sendToAPI("general", 
+									"A horse walks into a bar", 
+									"Everybody leaves seeing the danger in the situation"));
+
+	CHECK_NOTHROW(manager.loadFromAPI());
+}
+
 #else
 
 //********** MAIN FUNCTION **********
@@ -1259,7 +1388,7 @@ int main() {
 
 	manager.tryJSON();
 
-	while (choice != 6) {
+	while (choice != 8) {
 		manager.displayMenu();
 		cin >> choice;
 		if (cin.fail()) {
@@ -1421,6 +1550,13 @@ int main() {
 			cout << "Total Trips Taken: " << manager.countTripsRecursive() << endl;
 			break;
 		case 6:
+			manager.getJoke();
+			cout << "Sent Joke to API" << endl;
+			break;
+		case 7:
+			manager.loadFromAPI();
+			break;
+		case 8:
 			cin.clear();
 			cin.ignore(100, '\n');
 			while (leavechoice == 0) {

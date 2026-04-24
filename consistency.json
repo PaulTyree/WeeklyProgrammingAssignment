@@ -1,0 +1,10 @@
+[
+    {
+        "birds": 20.0,
+        "distance": 2.0,
+        "location": "Consistency",
+        "species": 5,
+        "time": 60,
+        "type": "Car"
+    }
+]
