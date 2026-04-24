@@ -1,0 +1,10 @@
+[
+    {
+        "birds": 10.0,
+        "distance": 1.0,
+        "location": "Test Save",
+        "species": 2,
+        "time": 60,
+        "type": "Trail"
+    }
+]
